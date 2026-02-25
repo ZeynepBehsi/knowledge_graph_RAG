@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Graph & RAG Öğrenme Modülü</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #7c3aed;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #334155;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 1.1em;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-button:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.2);
+            transition: left 0.3s ease;
+        }
+
+        .tab-button:hover:before {
+            left: 100%;
+        }
+
+        .tab-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 10px;
+            margin: 30px 0 20px 0;
+            font-size: 1.8em;
+        }
+
+        h3 {
+            color: var(--secondary);
+            margin: 25px 0 15px 0;
+            font-size: 1.4em;
+        }
+
+        h4 {
+            color: var(--dark);
+            margin: 20px 0 10px 0;
+            font-size: 1.2em;
+        }
+
+        .concept-box {
+            background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+            border-left: 5px solid var(--primary);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .concept-box.success {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-left-color: var(--success);
+        }
+
+        .concept-box.warning {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left-color: var(--warning);
+        }
+
+        .concept-box.danger {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-left-color: var(--danger);
+        }
+
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .code-block code {
+            color: #e2e8f0;
+        }
+
+        .keyword {
+            color: #c792ea;
+            font-weight: bold;
+        }
+
+        .string {
+            color: #c3e88d;
+        }
+
+        .comment {
+            color: #546e7a;
+            font-style: italic;
+        }
+
+        .step-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .step-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step-card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border-color: var(--primary);
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+
+        .diagram-container {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 25px 0;
+            border: 2px dashed var(--border);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, #fef08a 0%, #fde047 100%);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .icon {
+            display: inline-block;
+            margin-right: 8px;
+            font-size: 1.2em;
+        }
+
+        .workflow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .workflow-step {
+            flex: 1;
+            min-width: 150px;
+            background: white;
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .workflow-arrow {
+            font-size: 2em;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .example-box {
+            background: #f1f5f9;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid var(--success);
+        }
+
+        .key-points {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .key-points ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .key-points li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .key-points li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: bold;
+            font-size: 1.3em;
+        }
+
+        .interactive-demo {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .demo-button {
+            background: var(--primary);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .demo-button:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        .result-box {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; max-height: 0; }
+            to { opacity: 1; max-height: 500px; }
+        }
+
+        footer {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            text-align: center;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8em; }
+            .tab-button { min-width: 100%; }
+            .workflow { flex-direction: column; }
+            .workflow-arrow { transform: rotate(90deg); }
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            border-bottom: 2px dotted var(--primary);
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            z-index: 1000;
+            font-size: 0.9em;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 1s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧠 Knowledge Graph & RAG Öğrenme Modülü</h1>
+            <p class="subtitle">Neo4j, Cypher, Vector Embeddings ve RAG Sistemleri - Adım Adım Rehber</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar"></div>
+            </div>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-button active" onclick="openTab('lesson1')">
+                📊 Ders 1: Cypher Sorguları
+            </button>
+            <button class="tab-button" onclick="openTab('lesson2')">
+                🔍 Ders 2: Vector Embeddings
+            </button>
+            <button class="tab-button" onclick="openTab('lesson3')">
+                🚀 Ders 3: RAG Pipeline
+            </button>
+            <button class="tab-button" onclick="openTab('summary')">
+                📚 Özet & Kaynaklar
+            </button>
+        </nav>
+
+        <!-- LESSON 1: CYPHER QUERIES -->
+        <div id="lesson1" class="tab-content active">
+            <h2>📊 Ders 1: Neo4j ile Cypher Sorguları</h2>
+            
+            <div class="concept-box">
+                <h3><span class="icon">💡</span>Graf Veritabanı Nedir?</h3>
+                <p>Graf veritabanları, verileri <strong>node (düğüm)</strong> ve <strong>relationship (ilişki)</strong> olarak saklayan veritabanlarıdır. İlişkisel veritabanlarından farklı olarak, bağlantılar birinci sınıf vatandaştır.</p>
+            </div>
+
+            <div class="diagram-container">
+                <h4>Graf Veritabanı Yapısı</h4>
+                <div class="mermaid">
+                graph LR
+                    A[Person: Tom Hanks] -->|ACTED_IN| B[Movie: Cloud Atlas]
+                    C[Person: Halle Berry] -->|ACTED_IN| B
+                    D[Person: Lana Wachowski] -->|DIRECTED| B
+                    A -->|ACTED_IN| E[Movie: Forrest Gump]
+                    style A fill:#e0e7ff
+                    style C fill:#e0e7ff
+                    style D fill:#fef3c7
+                    style B fill:#d1fae5
+                    style E fill:#d1fae5
+                </div>
+            </div>
+
+            <h3>🔤 Cypher Dili Temelleri</h3>
+            
+            <div class="step-container">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h4>MATCH - Bulma</h4>
+                    <p>Graf'ta pattern araması yapar</p>
+                    <div class="code-block">
+<code><span class="keyword">MATCH</span> (n:Movie)
+<span class="keyword">RETURN</span> n</code>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h4>WHERE - Filtreleme</h4>
+                    <p>Koşula göre filtreleme</p>
+                    <div class="code-block">
+<code><span class="keyword">WHERE</span> n.released >= 1990</code>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h4>RETURN - Döndürme</h4>
+                    <p>Sonuçları döndürür</p>
+                    <div class="code-block">
+<code><span class="keyword">RETURN</span> n.title, n.released</code>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <h4>CREATE - Oluşturma</h4>
+                    <p>Yeni node/ilişki oluşturur</p>
+                    <div class="code-block">
+<code><span class="keyword">CREATE</span> (p:Person {name:<span class="string">"Ali"</span>})</code>
+                    </div>
+                </div>
+            </div>
+
+            <h3>📝 Pratik Örnekler</h3>
+
+            <div class="example-box">
+                <h4>Örnek 1: Tüm Nodeları Sayma</h4>
+                <div class="code-block">
+<code><span class="keyword">MATCH</span> (n)
+<span class="keyword">RETURN</span> <span class="keyword">count</span>(n) <span class="keyword">AS</span> numberOfNodes</code>
+                </div>
+                <p><strong>Açıklama:</strong> Graf'taki tüm node'ları bulur ve sayar.</p>
+            </div>
+
+            <div class="example-box">
+                <h4>Örnek 2: Belirli Bir Filmi Bulma</h4>
+                <div class="code-block">
+<code><span class="keyword">MATCH</span> (m:Movie {title: <span class="string">"Cloud Atlas"</span>})
+<span class="keyword">RETURN</span> m.title, m.released, m.tagline</code>
+                </div>
+                <p><strong>Açıklama:</strong> "Cloud Atlas" filmini bulur ve özelliklerini döndürür.</p>
+            </div>
+
+            <div class="example-box">
+                <h4>Örnek 3: İlişkileri Takip Etme</h4>
+                <div class="code-block">
+<code><span class="keyword">MATCH</span> (tom:Person {name:<span class="string">"Tom Hanks"</span>})-[:ACTED_IN]->(movie:Movie)
+<span class="keyword">RETURN</span> tom.name, movie.title</code>
+                </div>
+                <p><strong>Açıklama:</strong> Tom Hanks'in oynadığı tüm filmleri bulur.</p>
+            </div>
+
+            <div class="example-box">
+                <h4>Örnek 4: Ortak Oyuncular (Co-actors)</h4>
+                <div class="code-block">
+<code><span class="keyword">MATCH</span> (tom:Person {name:<span class="string">"Tom Hanks"</span>})-[:ACTED_IN]->(m)&lt;-[:ACTED_IN]-(coActors)
+<span class="keyword">RETURN</span> coActors.name, m.title</code>
+                </div>
+                <p><strong>Açıklama:</strong> Tom Hanks ile birlikte oynayan diğer aktörleri bulur.</p>
+            </div>
+
+            <div class="concept-box warning">
+                <h4><span class="icon">⚠️</span> Önemli Kavramlar</h4>
+                <ul>
+                    <li><span class="highlight">(n:Label)</span> - Node pattern (n değişken adı, Label etiket)</li>
+                    <li><span class="highlight">-[:TYPE]-></span> - Yönlü ilişki</li>
+                    <li><span class="highlight">{property: value}</span> - Property filtresi</li>
+                    <li><span class="highlight">MERGE</span> - Varsa kullan, yoksa oluştur (idempotent)</li>
+                    <li><span class="highlight">DELETE</span> - Node veya ilişki sil</li>
+                </ul>
+            </div>
+
+            <div class="interactive-demo">
+                <h4>🎮 İnteraktif Demo</h4>
+                <p>Cypher sorgularını test edin:</p>
+                <button class="demo-button" onclick="showDemo('cypher1')">Node Sayısı</button>
+                <button class="demo-button" onclick="showDemo('cypher2')">Film Ara</button>
+                <button class="demo-button" onclick="showDemo('cypher3')">İlişki Bul</button>
+                <div id="demo-result" class="result-box"></div>
+            </div>
+
+            <div class="key-points">
+                <h4>🎯 Önemli Noktalar</h4>
+                <ul>
+                    <li>Cypher, graf veritabanları için SQL benzeri bir dildir</li>
+                    <li>Pattern matching ile karmaşık ilişkileri kolayca sorgulayabilirsiniz</li>
+                    <li>Neo4j, sosyal ağlar, öneri sistemleri ve bilgi grafikleri için idealdir</li>
+                    <li>İlişkiler birinci sınıf vatandaştır - JOIN'e gerek yoktur</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- LESSON 2: VECTOR EMBEDDINGS -->
+        <div id="lesson2" class="tab-content">
+            <h2>🔍 Ders 2: Vector Embeddings ve Similarity Search</h2>
+
+            <div class="concept-box">
+                <h3><span class="icon">💡</span>Vector Embedding Nedir?</h3>
+                <p>Vector embedding, metinleri sayısal vektörlere (sayı dizilerine) çevirme işlemidir. Bu vektörler, metnin <strong>anlamsal içeriğini</strong> temsil eder.</p>
+            </div>
+
+            <div class="diagram-container">
+                <h4>Embedding Süreci</h4>
+                <div class="mermaid">
+                graph LR
+                    A["Metin: 'Everything has an end'"] --> B[OpenAI API]
+                    B --> C["Vektör: [0.123, -0.456, ..., 0.789]"]
+                    C --> D[1536 boyutlu vektör]
+                    style A fill:#e0e7ff
+                    style B fill:#fef3c7
+                    style C fill:#d1fae5
+                    style D fill:#fecaca
+                </div>
+            </div>
+
+            <h3>📊 Vector Embeddings Nasıl Çalışır?</h3>
+
+            <div class="comparison-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Geleneksel Arama</th>
+                            <th>Vector Search</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Kelime eşleşmesi</td>
+                            <td>Anlamsal benzerlik</td>
+                        </tr>
+                        <tr>
+                            <td>"Love" != "Aşk"</td>
+                            <td>"Love" ≈ "Aşk" ≈ "Romance"</td>
+                        </tr>
+                        <tr>
+                            <td>Sinonim sorunları</td>
+                            <td>Bağlam anlama</td>
+                        </tr>
+                        <tr>
+                            <td>Kesin eşleşme gerekir</td>
+                            <td>Benzerlik skoru verir</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="step-container">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h4>Vector Index Oluştur</h4>
+                    <div class="code-block">
+<code><span class="keyword">CREATE VECTOR INDEX</span> movie_embeddings
+<span class="keyword">FOR</span> (m:Movie) 
+<span class="keyword">ON</span> (m.taglineEmbedding)</code>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h4>Embedding Hesapla</h4>
+                    <div class="code-block">
+<code>genai.vector.encode(
+  movie.tagline, 
+  <span class="string">"OpenAI"</span>
+)</code>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h4>Node'a Kaydet</h4>
+                    <div class="code-block">
+<code>db.create.setNodeVectorProperty(
+  movie, 
+  <span class="string">"taglineEmbedding"</span>, 
+  vector
+)</code>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <h4>Similarity Search</h4>
+                    <div class="code-block">
+<code>db.index.vector.queryNodes(
+  <span class="string">'movie_embeddings'</span>,
+  5,
+  question_embedding
+)</code>
+                    </div>
+                </div>
+            </div>
+
+            <h3>🎯 Vector Index Neden Önemli?</h3>
+
+            <div class="workflow">
+                <div class="workflow-step">
+                    <h4>❌ Index Yok</h4>
+                    <p>1M vektör</p>
+                    <p>Tümünü karşılaştır</p>
+                    <p><strong>~30 saniye</strong></p>
+                </div>
+                <div class="workflow-arrow">VS</div>
+                <div class="workflow-step">
+                    <h4>✅ Index Var</h4>
+                    <p>1M vektör</p>
+                    <p>HNSW algoritması</p>
+                    <p><strong>~0.1 saniye</strong></p>
+                </div>
+            </div>
+
+            <div class="concept-box success">
+                <h4><span class="icon">🚀</span> Vector Index Avantajları</h4>
+                <ul>
+                    <li><strong>300x daha hızlı:</strong> Milyonlarca vektörde anlık arama</li>
+                    <li><strong>HNSW Algoritması:</strong> Hierarchical Navigable Small World graphs</li>
+                    <li><strong>Cosine Similarity:</strong> 0-1 arası benzerlik skoru</li>
+                    <li><strong>Top-K Results:</strong> En benzer N sonucu döndürür</li>
+                </ul>
+            </div>
+
+            <div class="example-box">
+                <h4>Örnek: Film Önerisi</h4>
+                <div class="code-block">
+<code><span class="comment">// Soru: "What movies are about love?"</span>
+
+<span class="keyword">WITH</span> genai.vector.encode($question, <span class="string">"OpenAI"</span>, {...}) <span class="keyword">AS</span> question_embedding
+<span class="keyword">CALL</span> db.index.vector.queryNodes(
+    <span class="string">'movie_tagline_embeddings'</span>, 
+    5, 
+    question_embedding
+) <span class="keyword">YIELD</span> node <span class="keyword">AS</span> movie, score
+<span class="keyword">RETURN</span> movie.title, movie.tagline, score</code>
+                </div>
+                <p><strong>Sonuç:</strong></p>
+                <table class="comparison-table">
+                    <tr>
+                        <th>Film</th>
+                        <th>Slogan</th>
+                        <th>Skor</th>
+                    </tr>
+                    <tr>
+                        <td>Jerry Maguire</td>
+                        <td>The rest of his life begins now</td>
+                        <td>0.92</td>
+                    </tr>
+                    <tr>
+                        <td>As Good as It Gets</td>
+                        <td>A comedy from the heart</td>
+                        <td>0.88</td>
+                    </tr>
+                    <tr>
+                        <td>When Harry Met Sally</td>
+                        <td>Can two friends sleep together?</td>
+                        <td>0.85</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="interactive-demo">
+                <h4>🎮 Similarity Search Demo</h4>
+                <p>Farklı sorular deneyin:</p>
+                <button class="demo-button" onclick="showDemo('vector1')">Aşk Filmleri</button>
+                <button class="demo-button" onclick="showDemo('vector2')">Aksiyon Filmleri</button>
+                <button class="demo-button" onclick="showDemo('vector3')">Komedi Filmleri</button>
+                <div id="demo-result-vector" class="result-box"></div>
+            </div>
+
+            <div class="key-points">
+                <h4>🎯 Önemli Noktalar</h4>
+                <ul>
+                    <li>Embedding'ler anlamsal benzerliği yakalar</li>
+                    <li>Vector index olmadan büyük verilerde arama çok yavaştır</li>
+                    <li>OpenAI embeddings 1536 boyutludur (standart)</li>
+                    <li>Cosine similarity 0-1 arası skor verir (1 = çok benzer)</li>
+                    <li>RAG sistemlerinin temelini oluşturur</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- LESSON 3: RAG PIPELINE -->
+        <div id="lesson3" class="tab-content">
+            <h2>🚀 Ders 3: RAG Pipeline - Metinden Knowledge Graph</h2>
+
+            <div class="concept-box">
+                <h3><span class="icon">💡</span>RAG Nedir?</h3>
+                <p><strong>RAG (Retrieval-Augmented Generation)</strong>, bilgi alımı (retrieval) ve metin üretimini (generation) birleştiren bir tekniktir. LLM'lere dış bilgi kaynakları sağlar.</p>
+            </div>
+
+            <div class="diagram-container">
+                <h4>Tam RAG Pipeline</h4>
+                <div class="mermaid">
+                graph TB
+                    A[📄 Form 10-K JSON] --> B[✂️ Text Splitter]
+                    B --> C[📦 Chunks 2000 karakter]
+                    C --> D[📊 Neo4j Nodes]
+                    D --> E[🧮 OpenAI Embeddings]
+                    E --> F[🔍 Vector Index]
+                    F --> G[❓ Kullanıcı Sorusu]
+                    G --> H[🔎 Similarity Search]
+                    H --> I[📝 İlgili Chunks]
+                    I --> J[🤖 LLM GPT-4]
+                    J --> K[✅ Cevap]
+                    style A fill:#e0e7ff
+                    style C fill:#fef3c7
+                    style D fill:#d1fae5
+                    style F fill:#fecaca
+                    style K fill:#d1fae5
+                </div>
+            </div>
+
+            <h3>📋 Pipeline Adımları</h3>
+
+            <div class="workflow">
+                <div class="workflow-step">
+                    <strong>1️⃣</strong>
+                    <h4>Veri Yükleme</h4>
+                    <p>Form 10-K JSON</p>
+                </div>
+                <div class="workflow-arrow">→</div>
+                <div class="workflow-step">
+                    <strong>2️⃣</strong>
+                    <h4>Text Splitting</h4>
+                    <p>2000 kar. chunks</p>
+                </div>
+                <div class="workflow-arrow">→</div>
+                <div class="workflow-step">
+                    <strong>3️⃣</strong>
+                    <h4>Node Oluştur</h4>
+                    <p>Neo4j Graf</p>
+                </div>
+                <div class="workflow-arrow">→</div>
+                <div class="workflow-step">
+                    <strong>4️⃣</strong>
+                    <h4>Embedding</h4>
+                    <p>1536 boyut</p>
+                </div>
+                <div class="workflow-arrow">→</div>
+                <div class="workflow-step">
+                    <strong>5️⃣</strong>
+                    <h4>Vector Index</h4>
+                    <p>HNSW</p>
+                </div>
+                <div class="workflow-arrow">→</div>
+                <div class="workflow-step">
+                    <strong>6️⃣</strong>
+                    <h4>RAG Chain</h4>
+                    <p>QA Sistem</p>
+                </div>
+            </div>
+
+            <h3>✂️ Adım 1: Text Chunking</h3>
+
+            <div class="example-box">
+                <h4>Text Splitter Ayarları</h4>
+                <div class="code-block">
+<code>text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size = <span class="string">2000</span>,        <span class="comment"># Her parça 2000 karakter</span>
+    chunk_overlap = <span class="string">200</span>,      <span class="comment"># 200 karakter örtüşme</span>
+    length_function = len,
+    is_separator_regex = <span class="keyword">False</span>
+)</code>
+                </div>
+            </div>
+
+            <div class="concept-box warning">
+                <h4><span class="icon">⚠️</span>Neden Chunk Overlap?</h4>
+                <p>Overlap, cümlelerin chunk sınırlarında kesilmesini önler ve bağlamın korunmasını sağlar.</p>
+                <div style="margin-top: 15px;">
+                    <strong>Örnek:</strong>
+                    <div class="code-block" style="font-size: 0.9em;">
+<code>Chunk 1: "...şirket büyük bir başarı elde etti."
+Chunk 2: "elde etti. 2023 yılında gelirler arttı..."
+                ↑ Örtüşme bölgesi</code>
+                    </div>
+                </div>
+            </div>
+
+            <h3>📊 Adım 2: Graf Node'ları Oluşturma</h3>
+
+            <div class="example-box">
+                <h4>Chunk Metadata Yapısı</h4>
+                <div class="code-block">
+<code>{
+    <span class="string">'text'</span>: <span class="string">'NetApp is a global...'</span>,
+    <span class="string">'chunkId'</span>: <span class="string">'0000950170-23-027948-item1-chunk0001'</span>,
+    <span class="string">'f10kItem'</span>: <span class="string">'item1'</span>,
+    <span class="string">'chunkSeqId'</span>: 1,
+    <span class="string">'formId'</span>: <span class="string">'0000950170-23-027948'</span>,
+    <span class="string">'names'</span>: [<span class="string">'NetApp'</span>],
+    <span class="string">'cik'</span>: <span class="string">'1002047'</span>,
+    <span class="string">'source'</span>: <span class="string">'https://...'</span>
+}</code>
+                </div>
+            </div>
+
+            <div class="example-box">
+                <h4>Node Oluşturma Sorgusu</h4>
+                <div class="code-block">
+<code><span class="keyword">MERGE</span>(mergedChunk:Chunk {chunkId: $chunkParam.chunkId})
+    <span class="keyword">ON CREATE SET</span> 
+        mergedChunk.text = $chunkParam.text,
+        mergedChunk.formId = $chunkParam.formId,
+        mergedChunk.names = $chunkParam.names,
+        mergedChunk.cik = $chunkParam.cik
+<span class="keyword">RETURN</span> mergedChunk</code>
+                </div>
+                <p><strong>MERGE:</strong> Node varsa kullan, yoksa oluştur (tekrar yaratmayı önler)</p>
+            </div>
+
+            <h3>🔍 Adım 3: Vector Index ve Embeddings</h3>
+
+            <div class="step-container">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h4>Index Oluştur</h4>
+                    <div class="code-block">
+<code><span class="keyword">CREATE VECTOR INDEX</span>
+  form_10k_chunks
+<span class="keyword">FOR</span> (c:Chunk) 
+<span class="keyword">ON</span> (c.textEmbedding)</code>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h4>Embedding Hesapla</h4>
+                    <div class="code-block">
+<code>genai.vector.encode(
+  chunk.text,
+  <span class="string">"OpenAI"</span>,
+  {token: $apiKey}
+)</code>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h4>Property Ata</h4>
+                    <div class="code-block">
+<code>db.create
+  .setNodeVectorProperty(
+    chunk, 
+    <span class="string">"textEmbedding"</span>, 
+    vector
+  )</code>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <h4>Search Yap</h4>
+                    <div class="code-block">
+<code>db.index.vector
+  .queryNodes(
+    index_name,
+    top_k,
+    embedding
+  )</code>
+                    </div>
+                </div>
+            </div>
+
+            <h3>💬 Adım 4: RAG Chain ile Soru-Cevap</h3>
+
+            <div class="diagram-container">
+                <h4>RAG Sorgu Akışı</h4>
+                <div class="mermaid">
+                sequenceDiagram
+                    participant U as Kullanıcı
+                    participant R as Retriever
+                    participant N as Neo4j
+                    participant L as LLM
+                    
+                    U->>R: "NetApp'in ana işi nedir?"
+                    R->>R: Soruyu embedding'e çevir
+                    R->>N: Vector search yap
+                    N->>R: En benzer 5 chunk
+                    R->>L: Chunk'lar + Soru
+                    L->>U: "NetApp, veri yönetimi çözümleri sunar..."
+                </div>
+            </div>
+
+            <div class="example-box">
+                <h4>LangChain RAG Setup</h4>
+                <div class="code-block">
+<code><span class="comment"># Vector Store</span>
+neo4j_vector_store = Neo4jVector.from_existing_graph(
+    embedding=OpenAIEmbeddings(),
+    index_name=<span class="string">'form_10k_chunks'</span>,
+    node_label=<span class="string">'Chunk'</span>
+)
+
+<span class="comment"># Retriever</span>
+retriever = neo4j_vector_store.as_retriever()
+
+<span class="comment"># QA Chain</span>
+chain = RetrievalQAWithSourcesChain.from_chain_type(
+    ChatOpenAI(temperature=0), 
+    chain_type=<span class="string">"stuff"</span>, 
+    retriever=retriever
+)</code>
+                </div>
+            </div>
+
+            <div class="concept-box success">
+                <h4><span class="icon">✅</span> RAG Avantajları</h4>
+                <ul>
+                    <li><strong>Güncel Bilgi:</strong> LLM eğitim verisinin ötesinde bilgi</li>
+                    <li><strong>Kaynak Takibi:</strong> Cevabın nereden geldiğini bilme</li>
+                    <li><strong>Halüsinasyon Azaltma:</strong> Gerçek belgelere dayalı cevaplar</li>
+                    <li><strong>Domain Expertise:</strong> Özel bilgi tabanlarına erişim</li>
+                    <li><strong>Maliyet Etkin:</strong> Fine-tuning'e göre çok daha ucuz</li>
+                </ul>
+            </div>
+
+            <div class="example-box">
+                <h4>Örnek Sorgular ve Cevaplar</h4>
+                <table class="comparison-table">
+                    <tr>
+                        <th>Soru</th>
+                        <th>Cevap</th>
+                        <th>Kaynak</th>
+                    </tr>
+                    <tr>
+                        <td>NetApp'in ana işi nedir?</td>
+                        <td>NetApp, intelligent data infrastructure çözümleri sunar.</td>
+                        <td>Form 10-K Item 1</td>
+                    </tr>
+                    <tr>
+                        <td>Şirket nerede kurulmuş?</td>
+                        <td>NetApp merkezi Sunnyvale, California'dadır.</td>
+                        <td>Form 10-K Item 1</td>
+                    </tr>
+                    <tr>
+                        <td>Apple hakkında bilgi ver</td>
+                        <td>I don't know. (Belgede Apple bilgisi yok)</td>
+                        <td>-</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="interactive-demo">
+                <h4>🎮 RAG Demo - Kendi Sorunuzu Sorun</h4>
+                <input type="text" id="ragQuestion" placeholder="Sorunuzu buraya yazın..." 
+                       style="width: 80%; padding: 12px; border-radius: 8px; border: 2px solid #e2e8f0; margin: 10px;">
+                <button class="demo-button" onclick="askRAG()">Sor</button>
+                <div id="demo-result-rag" class="result-box"></div>
+            </div>
+
+            <div class="concept-box danger">
+                <h4><span class="icon">⚡</span> Performans İpuçları</h4>
+                <ul>
+                    <li><strong>Chunk Size:</strong> 1000-2000 karakter optimal (çok küçük = bağlam eksik, çok büyük = gürültülü)</li>
+                    <li><strong>Overlap:</strong> 10-20% örtüşme ideal</li>
+                    <li><strong>Top-K:</strong> 5-10 chunk genellikle yeterli</li>
+                    <li><strong>Reranking:</strong> Daha iyi sonuçlar için ikinci bir sıralama adımı ekleyin</li>
+                    <li><strong>Caching:</strong> Sık sorulan soruları cache'leyin</li>
+                </ul>
+            </div>
+
+            <div class="key-points">
+                <h4>🎯 Önemli Noktalar</h4>
+                <ul>
+                    <li>RAG = Retrieval (Alma) + Augmented (Zenginleştirme) + Generation (Üretim)</li>
+                    <li>Text chunking, embedding ve vector search temel yapı taşlarıdır</li>
+                    <li>Neo4j, metadata ve ilişkileri saklamak için idealdir</li>
+                    <li>LangChain, RAG pipeline'ını kolaylaştırır</li>
+                    <li>Kaynak takibi sayede cevaplar güvenilirdir</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SUMMARY -->
+        <div id="summary" class="tab-content">
+            <h2>📚 Özet ve Kaynaklar</h2>
+
+            <div class="concept-box">
+                <h3><span class="icon">🎓</span>Üç Dersin Özeti</h3>
+            </div>
+
+            <div class="step-container">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h4>Cypher Sorguları</h4>
+                    <ul style="text-align: left; margin-top: 10px;">
+                        <li>Graf veritabanı temelleri</li>
+                        <li>MATCH, WHERE, RETURN</li>
+                        <li>İlişki takibi</li>
+                        <li>CREATE, MERGE, DELETE</li>
+                    </ul>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h4>Vector Embeddings</h4>
+                    <ul style="text-align: left; margin-top: 10px;">
+                        <li>Semantic search</li>
+                        <li>Vector index HNSW</li>
+                        <li>OpenAI embeddings</li>
+                        <li>Cosine similarity</li>
+                    </ul>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h4>RAG Pipeline</h4>
+                    <ul style="text-align: left; margin-top: 10px;">
+                        <li>Text chunking</li>
+                        <li>Knowledge graph</li>
+                        <li>Retrieval + Generation</li>
+                        <li>LangChain QA</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="diagram-container">
+                <h4>Tüm Sistem Mimarisi</h4>
+                <div class="mermaid">
+                graph TB
+                    subgraph "Veri Katmanı"
+                        A[Form 10-K] --> B[Text Chunks]
+                    end
+                    
+                    subgraph "Graf Katmanı"
+                        B --> C[Neo4j Nodes]
+                        C --> D[Metadata]
+                        C --> E[İlişkiler]
+                    end
+                    
+                    subgraph "Embedding Katmanı"
+                        C --> F[OpenAI API]
+                        F --> G[Vector Embeddings]
+                        G --> H[Vector Index]
+                    end
+                    
+                    subgraph "RAG Katmanı"
+                        I[Kullanıcı Sorusu] --> J[Embedding]
+                        J --> H
+                        H --> K[Similarity Search]
+                        K --> L[Top-K Chunks]
+                        L --> M[LLM GPT-4]
+                        M --> N[Cevap + Kaynak]
+                    end
+                    
+                    style A fill:#e0e7ff
+                    style C fill:#d1fae5
+                    style H fill:#fecaca
+                    style N fill:#fef3c7
+                </div>
+            </div>
+
+            <h3>🔗 Teknoloji Stack</h3>
+
+            <table class="comparison-table">
+                <tr>
+                    <th>Teknoloji</th>
+                    <th>Kullanım Alanı</th>
+                    <th>Neden Seçildi?</th>
+                </tr>
+                <tr>
+                    <td><strong>Neo4j</strong></td>
+                    <td>Graf Veritabanı</td>
+                    <td>İlişki yönetimi, Cypher sorguları, Vector index desteği</td>
+                </tr>
+                <tr>
+                    <td><strong>OpenAI API</strong></td>
+                    <td>Embeddings & LLM</td>
+                    <td>1536 boyutlu embeddings, GPT-4 cevap üretimi</td>
+                </tr>
+                <tr>
+                    <td><strong>LangChain</strong></td>
+                    <td>RAG Framework</td>
+                    <td>Pipeline orchestration, retriever abstraction</td>
+                </tr>
+                <tr>
+                    <td><strong>Python</strong></td>
+                    <td>Programlama Dili</td>
+                    <td>Zengin ekosistem, kolay entegrasyon</td>
+                </tr>
+            </table>
+
+            <h3>📖 Kaynaklar ve İleri Okuma</h3>
+
+            <div class="key-points">
+                <h4>Resmi Dokümantasyonlar</h4>
+                <ul>
+                    <li><a href="https://neo4j.com/docs/" target="_blank" style="color: var(--primary);">Neo4j Documentation</a></li>
+                    <li><a href="https://neo4j.com/docs/cypher-manual/" target="_blank" style="color: var(--primary);">Cypher Query Language</a></li>
+                    <li><a href="https://python.langchain.com/" target="_blank" style="color: var(--primary);">LangChain Documentation</a></li>
+                    <li><a href="https://platform.openai.com/docs/guides/embeddings" target="_blank" style="color: var(--primary);">OpenAI Embeddings Guide</a></li>
+                </ul>
+            </div>
+
+            <div class="concept-box success">
+                <h4><span class="icon">🚀</span>Bir Sonraki Adımlar</h4>
+                <ol style="margin-left: 20px; margin-top: 15px;">
+                    <li><strong>Kendi Verinizi Deneyin:</strong> Farklı belgelerle RAG pipeline kurun</li>
+                    <li><strong>Cypher Pratik:</strong> Neo4j sandbox'ta daha karmaşık sorgular yazın</li>
+                    <li><strong>Hybrid Search:</strong> Vector + keyword search kombinasyonu</li>
+                    <li><strong>Multi-hop Reasoning:</strong> Graf üzerinde çok adımlı sorgular</li>
+                    <li><strong>Production Deployment:</strong> API endpoint'leri, caching, monitoring</li>
+                </ol>
+            </div>
+
+            <div class="concept-box warning">
+                <h4><span class="icon">💡</span>En İyi Pratikler</h4>
+                <ul>
+                    <li><strong>Chunk Size Optimization:</strong> Veriye göre chunk boyutunu ayarlayın</li>
+                    <li><strong>Metadata Enrichment:</strong> Zengin metadata RAG performansını artırır</li>
+                    <li><strong>Error Handling:</strong> API hatalarını ve boş sonuçları handle edin</li>
+                    <li><strong>Monitoring:</strong> Latency, accuracy ve cost metrikleri takip edin</li>
+                    <li><strong>Testing:</strong> Çeşitli sorular ve edge case'ler test edin</li>
+                </ul>
+            </div>
+
+            <h3>🎯 Proje Fikirleri</h3>
+
+            <div class="step-container">
+                <div class="step-card">
+                    <h4>📰 Haber RAG</h4>
+                    <p>Haber makalelerinden anlık bilgi çıkarma sistemi</p>
+                </div>
+
+                <div class="step-card">
+                    <h4>📚 Kitap Asistanı</h4>
+                    <p>E-kitaplarınızdan soru-cevap sistemi</p>
+                </div>
+
+                <div class="step-card">
+                    <h4>🏢 Şirket Bilgi Tabanı</h4>
+                    <p>Şirket belgelerinden otomatik yanıt sistemi</p>
+                </div>
+
+                <div class="step-card">
+                    <h4>🎓 Akademik Araştırma</h4>
+                    <p>Bilimsel makalelerden literature review</p>
+                </div>
+
+                <div class="step-card">
+                    <h4>⚖️ Hukuk Asistanı</h4>
+                    <p>Yasalar ve mahkeme kararlarından bilgi</p>
+                </div>
+
+                <div class="step-card">
+                    <h4>🏥 Tıbbi Bilgi</h4>
+                    <p>Tıbbi literatürden hasta sorularına cevap</p>
+                </div>
+            </div>
+
+            <div class="interactive-demo">
+                <h4>🎉 Tebrikler!</h4>
+                <p>Knowledge Graph ve RAG sistemleri hakkında kapsamlı bir eğitim tamamladınız.</p>
+                <p style="margin-top: 15px;">Sorularınız veya projeleriniz için destek gerekirse topluluğa katılın:</p>
+                <div style="margin-top: 20px;">
+                    <button class="demo-button">Neo4j Community</button>
+                    <button class="demo-button">LangChain Discord</button>
+                    <button class="demo-button">GitHub Repository</button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p style="font-size: 1.1em; margin-bottom: 10px;">
+                <strong>💡 Bu modülü oluşturan: Knowledge Graph & RAG Öğrenme Sistemi</strong>
+            </p>
+            <p style="color: #64748b;">
+                Notebooks: L2-query_with_cypher.ipynb | 2-prep_text_for_RAG.ipynb | 3-construct_kg_from_text.ipynb
+            </p>
+            <p style="margin-top: 15px; font-size: 0.9em; color: #94a3b8;">
+                © 2026 - Eğitim Amaçlı İçerik
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                primaryColor: '#e0e7ff',
+                primaryTextColor: '#1e293b',
+                primaryBorderColor: '#2563eb',
+                lineColor: '#64748b',
+                secondaryColor: '#fef3c7',
+                tertiaryColor: '#d1fae5'
+            }
+        });
+
+        // Tab switching
+        function openTab(tabName) {
+            const contents = document.getElementsByClassName('tab-content');
+            const buttons = document.getElementsByClassName('tab-button');
+            
+            for (let content of contents) {
+                content.classList.remove('active');
+            }
+            
+            for (let button of buttons) {
+                button.classList.remove('active');
+            }
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Update progress bar
+            const tabs = ['lesson1', 'lesson2', 'lesson3', 'summary'];
+            const currentIndex = tabs.indexOf(tabName);
+            const progress = ((currentIndex + 1) / tabs.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            // Scroll to top
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        // Demo functions
+        function showDemo(demoType) {
+            const resultBox = document.getElementById('demo-result');
+            resultBox.style.display = 'block';
+            
+            const demos = {
+                'cypher1': `
+                    <h4>🔍 Sorgu Sonucu: Node Sayısı</h4>
+                    <div class="code-block">
+                        <code><span class="keyword">MATCH</span> (n) <span class="keyword">RETURN</span> count(n)</code>
+                    </div>
+                    <p><strong>Sonuç:</strong> Graf'ta toplam <span class="highlight">171 node</span> bulundu.</p>
+                `,
+                'cypher2': `
+                    <h4>🎬 Sorgu Sonucu: Film Ara</h4>
+                    <div class="code-block">
+                        <code><span class="keyword">MATCH</span> (m:Movie {title: "Cloud Atlas"}) <span class="keyword">RETURN</span> m</code>
+                    </div>
+                    <p><strong>Sonuç:</strong></p>
+                    <ul>
+                        <li>Başlık: Cloud Atlas</li>
+                        <li>Yıl: 2012</li>
+                        <li>Slogan: "Everything is connected"</li>
+                    </ul>
+                `,
+                'cypher3': `
+                    <h4>👥 Sorgu Sonucu: İlişkiler</h4>
+                    <div class="code-block">
+                        <code><span class="keyword">MATCH</span> (tom:Person {name:"Tom Hanks"})-[:ACTED_IN]->(m) <span class="keyword">RETURN</span> m.title</code>
+                    </div>
+                    <p><strong>Sonuç:</strong> Tom Hanks'in oynadığı filmler:</p>
+                    <ul>
+                        <li>Cloud Atlas</li>
+                        <li>The Polar Express</li>
+                        <li>Cast Away</li>
+                        <li>Apollo 13</li>
+                    </ul>
+                `,
+                'vector1': `
+                    <h4>❤️ Similarity Search: Aşk Filmleri</h4>
+                    <p><strong>Soru:</strong> "What movies are about love?"</p>
+                    <table class="comparison-table" style="font-size: 0.9em;">
+                        <tr><th>Film</th><th>Skor</th></tr>
+                        <tr><td>Jerry Maguire</td><td>0.92</td></tr>
+                        <tr><td>As Good as It Gets</td><td>0.88</td></tr>
+                        <tr><td>When Harry Met Sally</td><td>0.85</td></tr>
+                    </table>
+                `,
+                'vector2': `
+                    <h4>💥 Similarity Search: Aksiyon Filmleri</h4>
+                    <p><strong>Soru:</strong> "What movies are about action and adventure?"</p>
+                    <table class="comparison-table" style="font-size: 0.9em;">
+                        <tr><th>Film</th><th>Skor</th></tr>
+                        <tr><td>The Matrix</td><td>0.94</td></tr>
+                        <tr><td>Speed Racer</td><td>0.89</td></tr>
+                        <tr><td>Ninja Assassin</td><td>0.86</td></tr>
+                    </table>
+                `,
+                'vector3': `
+                    <h4>😄 Similarity Search: Komedi Filmleri</h4>
+                    <p><strong>Soru:</strong> "What movies will make me laugh?"</p>
+                    <table class="comparison-table" style="font-size: 0.9em;">
+                        <tr><th>Film</th><th>Skor</th></tr>
+                        <tr><td>What About Bob?</td><td>0.91</td></tr>
+                        <tr><td>As Good as It Gets</td><td>0.87</td></tr>
+                        <tr><td>Joe Versus the Volcano</td><td>0.83</td></tr>
+                    </table>
+                `
+            };
+            
+            resultBox.innerHTML = demos[demoType];
+        }
+
+        function askRAG() {
+            const question = document.getElementById('ragQuestion').value;
+            const resultBox = document.getElementById('demo-result-rag');
+            resultBox.style.display = 'block';
+            
+            if (!question) {
+                resultBox.innerHTML = '<p style="color: #ef4444;">Lütfen bir soru girin!</p>';
+                return;
+            }
+            
+            // Simulated RAG response
+            resultBox.innerHTML = `
+                <h4>🤖 RAG Cevabı</h4>
+                <p><strong>Soru:</strong> ${question}</p>
+                <div style="margin-top: 15px; padding: 15px; background: #f8fafc; border-radius: 8px;">
+                    <p><strong>Cevap:</strong> Bu bir demo cevaptır. Gerçek RAG sisteminde:</p>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li>Sorunuz embedding'e çevrilir</li>
+                        <li>En benzer 5-10 chunk bulunur</li>
+                        <li>Chunk'lar LLM'e gönderilir</li>
+                        <li>Bağlam bazlı cevap üretilir</li>
+                    </ol>
+                </div>
+                <p style="margin-top: 15px; font-size: 0.9em; color: #64748b;">
+                    <strong>Kaynak:</strong> Form 10-K Item 1, Chunks 3-7
+                </p>
+            `;
+        }
+
+        // Progress bar animation on load
+        window.addEventListener('load', function() {
+            document.getElementById('progressBar').style.width = '25%';
+        });
+    </script>
+</body>
+</html>
